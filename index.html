@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Akademi | İnteraktif Algoritma Merkezi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4338CA;
+            --primary-light: #6366F1;
+            --secondary: #10B981;
+            --warning: #F59E0B;
+            --bg: #F0FDF4; /* Çok hafif, iç açıcı yeşil/mavi tonu */
+            --text: #1F2937;
+            --card-bg: #FFFFFF;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        /* Üst Menü ve İlerleme */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white; padding: 1.5rem 1rem; text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        header h1 { font-size: 2.8rem; font-weight: 900; letter-spacing: 1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        
+        /* XP ve Seviye Barı */
+        .status-bar {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(5px);
+            max-width: 600px; margin: 1rem auto 0; padding: 1rem; border-radius: 20px;
+            display: flex; justify-content: space-between; align-items: center; border: 2px solid rgba(255,255,255,0.4);
+        }
+        .level-badge { background: var(--warning); color: #fff; padding: 0.5rem 1rem; border-radius: 15px; font-weight: 900; font-size: 1.2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .progress-container { flex-grow: 1; margin: 0 1rem; background: rgba(0,0,0,0.2); border-radius: 10px; height: 20px; overflow: hidden; }
+        .progress-bar { background: var(--secondary); width: 0%; height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.8); }
+        .xp-text { font-weight: 800; font-size: 1.2rem; }
+
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; display: flex; gap: 2rem; }
+
+        /* Sol Sidebar (Kategoriler) */
+        .sidebar { flex: 1; min-width: 250px; display: flex; flex-direction: column; gap: 1rem; }
+        .category-btn {
+            background: var(--card-bg); border: 2px solid #E5E7EB; padding: 1.2rem; text-align: left;
+            border-radius: 15px; font-size: 1.2rem; font-weight: 700; color: var(--text);
+            cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .category-btn:hover, .category-btn.active {
+            background: var(--primary-light); color: white; border-color: var(--primary);
+            transform: translateX(10px); box-shadow: 0 10px 15px rgba(99, 102, 241, 0.2);
+        }
+        .category-icon { font-size: 2rem; background: white; border-radius: 50%; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* Sağ İçerik Alanı */
+        .content-area { flex: 3; background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); border: 4px solid #EEF2FF; position: relative; overflow: hidden; }
+        .section { display: none; animation: slideUp 0.4s ease-out; }
+        .section.active { display: block; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-title { font-size: 2.2rem; color: var(--primary); margin-bottom: 1.5rem; border-bottom: 3px dashed #E5E7EB; padding-bottom: 10px; display: flex; align-items: center; gap: 15px; }
+        
+        /* Büyük Arapça Okuma Alanı (70 Yaş Uyumu) */
+        .arabic-display {
+            background: #F8FAFC; border: 3px solid #CBD5E1; border-radius: 20px;
+            padding: 3rem 1rem; margin: 2rem 0; text-align: center; position: relative;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .arabic-text {
+            font-family: 'Amiri', serif; font-size: 7rem; /* Çok büyük ve net */
+            color: #0F172A; direction: rtl; line-height: 1.2;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+        }
+        .arabic-subtitle { font-size: 1.5rem; color: #475569; margin-top: 1rem; font-weight: 700; }
+
+        .info-text { font-size: 1.4rem; margin-bottom: 1rem; line-height: 1.7; }
+        .highlight { background: #FEF3C7; padding: 2px 8px; border-radius: 5px; color: #D97706; font-weight: 800; }
+
+        /* Oyunlaştırma / Soru Alanı */
+        .quiz-box { background: #ECFDF5; border: 3px solid var(--secondary); border-radius: 20px; padding: 2rem; margin-top: 2rem; }
+        .quiz-question { font-size: 1.6rem; font-weight: 800; color: #065F46; text-align: center; margin-bottom: 2rem; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .option-btn {
+            background: white; border: 3px solid #A7F3D0; padding: 1.5rem; font-size: 1.5rem; font-weight: 700;
+            border-radius: 15px; cursor: pointer; transition: all 0.2s; color: #1F2937;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .option-btn:hover { background: var(--secondary); color: white; transform: translateY(-5px); box-shadow: 0 10px 15px rgba(16, 185, 129, 0.3); }
+
+        /* Başarı Modalı (Popup) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .modal { background: white; padding: 3rem; border-radius: 25px; text-align: center; max-width: 500px; border: 5px solid var(--warning); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+        .modal-emoji { font-size: 6rem; margin-bottom: 1rem; animation: tada 1s infinite; }
+        @keyframes tada { 0% {transform: scale(1);} 10%, 20% {transform: scale(0.9) rotate(-3deg);} 30%, 50%, 70%, 90% {transform: scale(1.1) rotate(3deg);} 40%, 60%, 80% {transform: scale(1.1) rotate(-3deg);} 100% {transform: scale(1);} }
+        .modal-title { font-size: 2.5rem; color: var(--secondary); font-weight: 900; margin-bottom: 1rem; }
+        .modal-desc { font-size: 1.4rem; margin-bottom: 2rem; }
+        .btn-next { background: var(--primary); color: white; border: none; padding: 1rem 2rem; font-size: 1.4rem; border-radius: 12px; cursor: pointer; font-weight: 800; width: 100%; transition: 0.3s; }
+        .btn-next:hover { background: var(--primary-light); transform: scale(1.05); }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { flex-direction: row; flex-wrap: wrap; }
+            .category-btn { flex: 1; min-width: 150px; font-size: 1rem; padding: 0.8rem; }
+            .arabic-text { font-size: 5rem; }
+            .options-grid { grid-template-columns: 1fr; }
+            header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌟 Q-Akademi </h1>
+        <div class="status-bar">
+            <div class="level-badge" id="levelDisplay">Seviye 1</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="xpBar"></div>
+            </div>
+            <div class="xp-text"><span id="xpDisplay">0</span> XP</div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="sidebar">
+            <button class="category-btn active" onclick="openSection('s1', this)">
+                <span class="category-icon">🧩</span> 1. Harf Mimarisi
+            </button>
+            <button class="category-btn" onclick="openSection('s2', this)">
+                <span class="category-icon">⚡</span> 2. Enerji Kodları
+            </button>
+            <button class="category-btn" onclick="openSection('s3', this)">
+                <span class="category-icon">🛑</span> 3. Kontrolcüler (Fren)
+            </button>
+            <button class="category-btn" onclick="openSection('s4', this)" id="btnS4" style="opacity: 0.5;">
+                <span class="category-icon">🔋</span> 4. Tecvid (Uzatmalar) 🔒
+            </button>
+        </div>
+
+        <div class="content-area">
+            
+            <div id="s1" class="section active">
+                <h2 class="section-title">🧩 1. Kural: Göbekleri Kes!</h2>
+                <p class="info-text">Arapça harfler birer kod bloğudur. Birbirlerine bağlanırken kocaman göbeklerini ve sarkan kuyruklarını bırakırlar. Geriye sadece <span class="highlight">Noktaları</span> kalır!</p>
+                
+                <div class="arabic-display">
+                    <div class="arabic-text">ج ➔ جـ</div>
+                    <div class="arabic-subtitle">Cim Harfi: Koca göbek gitti, kafa ve tek nokta kaldı.</div>
+                </div>
+
+                <div class="quiz-box">
+                    <div class="quiz-question">Gözlem Testi: Aşağıdaki bağlanan harf hangisidir? (Tek noktası altta kalmış)</div>
+                    <div class="arabic-display" style="padding: 1rem; margin: 1rem 0;">
+                        <div class="arabic-text" style="font-size: 5rem;">بـ</div>
+                    </div>
+                    <div class="options-grid">
+                        <button class="option-btn" onclick="wrongAnswer()">Te (Üstte iki nokta)</button>
+                        <button class="option-btn" onclick="correctAnswer(1, 'Harika Mühendis!', 'Alttaki tek noktayı şıp diye buldun. Sistem mimarisini çözüyorsun.', 's2')">Be (Altta tek nokta) ✅</button>
+                        <button class="option-btn" onclick="wrongAnswer()">Se (Üstte üç nokta)</button>
+                        <button class="option-btn" onclick="wrongAnswer()">Nun (Üstte tek nokta)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="s2" class="section">
+                <h2 class="section-title">⚡ 2. Kural: Sisteme Enerji Ver</h2>
+                <p class="info-text">Harfler tek başına iskelettir. Onlara sesi <b>Harekeler</b> (Enerji Kodları) verir.</p>
+                
+                <div class="arabic-display">
+                    <div class="arabic-text">بَ ِ بُ</div>
+                    <div class="arabic-subtitle">Üstün (A/E) - Esre (İ) - Ötre (U/Ü)</div>
+                </div>
+
+                <div class="quiz-box">
+                    <div class="quiz-question">Derleme Testi: Aşağıdaki kod bloğunun ses çıktısı nedir?</div>
+                    <div class="arabic-display" style="padding: 1rem; margin: 1rem 0;">
+                        <div class="arabic-text" style="font-size: 6rem;">كُتِبَ</div>
+                    </div>
+                    <div class="options-grid">
+                        <button class="option-btn" onclick="wrongAnswer()">KE - TE - BE</button>
+                        <button class="option-btn" onclick="wrongAnswer()">Kİ - Tİ - BE</button>
+                        <button class="option-btn" onclick="correctAnswer(2, 'Sisteme Enerji Yüklendi!', 'Kılık değiştiren Kef harfini ve Ötre, Esre, Üstün sıralamasını kusursuz okudun.', 's3')">KU - Tİ - BE ✅</button>
+                        <button class="option-btn" onclick="wrongAnswer()">KA - TU - BA</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="s3" class="section">
+                <h2 class="section-title">🛑 3. Kural: Fren (Cezm) Mekanizması</h2>
+                <p class="info-text">Harfin üzerinde küçük bir yuvarlak <b>( ْ )</b> görürsen motoru durdur! Sesi uzatmadan o harfe çarp ve kilitlen.</p>
+                
+                <div class="arabic-display">
+                    <div class="arabic-text">لَمْ</div>
+                    <div class="arabic-subtitle">Derleme: Lam üstünlü (LE) + Mim cezimli (M). Çıktı: LEM</div>
+                </div>
+
+                <div class="quiz-box">
+                    <div class="quiz-question">Simülasyon Testi: Bu veri bloğunda fren nerede yapılıyor?</div>
+                    <div class="arabic-display" style="padding: 1rem; margin: 1rem 0;">
+                        <div class="arabic-text" style="font-size: 6rem;">خُبْز</div>
+                    </div>
+                    <div class="options-grid">
+                        <button class="option-btn" onclick="wrongAnswer()">HU - BE - ZE</button>
+                        <button class="option-btn" onclick="correctAnswer(3, 'Frenleme Başarılı!', 'Tam zamanında frene bastın (Be harfinde). Modül kilidi açıldı!', 's4')">HUB - Z ✅</button>
+                        <button class="option-btn" onclick="wrongAnswer()">HI - Bİ - Zİ</button>
+                        <button class="option-btn" onclick="wrongAnswer()">HA - BÜ - ZE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="s4" class="section">
+                <h2 class="section-title">🔋 4. Kural: Aşırı Voltaj (Tecvid - Med)</h2>
+                <p class="info-text">Normalde sesi 1 saniye uzatan harfler (A, U, İ), eğer bir <b>Hemze ( ء )</b> şoklayıcısı ile karşılaşırsa voltaj <span class="highlight">4 Katına</span> çıkar!</p>
+                
+                <div class="arabic-display">
+                    <div class="arabic-text">جَاءَ</div>
+                    <div class="arabic-subtitle">Hemze tetikleyicisi sesi büker. Çıktı: CÂÂÂÂ - E</div>
+                </div>
+
+                <div class="quiz-box" style="background:#EFF6FF; border-color:#3B82F6;">
+                    <div class="quiz-question">Büyük Final: Bu kelimede ses kaç saniye (birim) uzatılır?</div>
+                    <div class="arabic-display" style="padding: 1rem; margin: 1rem 0; border-color:#93C5FD;">
+                        <div class="arabic-text" style="font-size: 6rem;">سُوءَ</div>
+                    </div>
+                    <div class="options-grid">
+                        <button class="option-btn" onclick="wrongAnswer()">1 Birim (Sû-e)</button>
+                        <button class="option-btn" onclick="wrongAnswer()">Hiç uzatılmaz (Sue)</button>
+                        <button class="option-btn" onclick="wrongAnswer()">2 Birim (Sûû-e)</button>
+                        <button class="option-btn" style="border-color:#3B82F6;" onclick="finishGame()">4 Birim (SÛÛÛÛ-E) ✅</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-emoji" id="modalEmoji">🚀</div>
+            <div class="modal-title" id="modalTitle">Seviye Atladın!</div>
+            <div class="modal-desc" id="modalDesc">Harika iş çıkardın.</div>
+            <button class="btn-next" onclick="nextSection()">Devam Et ➔</button>
+        </div>
+    </div>
+
+    <script>
+        let currentXP = 0;
+        let targetSection = '';
+
+        // Menü Gezinme
+        function openSection(id, btnElement) {
+            if(btnElement.style.opacity === '0.5') {
+                alert("Önceki laboratuvar testlerini geçmeden bu modülün kilidini açamazsın!");
+                return;
+            }
+            
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+
+        // Yanlış Cevap
+        function wrongAnswer() {
+            alert("Sistem Hatası ❌\nLütfen algoritmaya tekrar bak. Harflerin noktalarını veya harekesini gözden kaçırdın.");
+        }
+
+        // Doğru Cevap (XP Ekleme ve Popup)
+        function correctAnswer(level, title, desc, nextSec) {
+            targetSection = nextSec;
+            
+            // XP Ekle ve Barı Doldur
+            currentXP += 250;
+            document.getElementById('xpDisplay').innerText = currentXP;
+            document.getElementById('xpBar').style.width = (level * 25) + '%';
+            document.getElementById('levelDisplay').innerText = 'Seviye ' + (level + 1);
+
+            // Modalı Göster
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerText = desc;
+            
+            if(level === 3) {
+                // Modül 4 kilidini aç
+                let s4Btn = document.getElementById('btnS4');
+                s4Btn.style.opacity = '1';
+                s4Btn.innerHTML = '<span class="category-icon">🔋</span> 4. Tecvid (Uzatmalar)';
+            }
+
+            document.getElementById('successModal').style.display = 'flex';
+            createConfetti();
+        }
+
+        // Modaldan Sonraki Bölüme Geç
+        function nextSection() {
+            document.getElementById('successModal').style.display = 'none';
+            if(targetSection) {
+                let btnId = targetSection === 's2' ? 1 : targetSection === 's3' ? 2 : 3;
+                let btns = document.querySelectorAll('.category-btn');
+                openSection(targetSection, btns[btnId]);
+            }
+        }
+
+        // Oyunu Bitir
+        function finishGame() {
+            currentXP += 250;
+            document.getElementById('xpDisplay').innerText = currentXP;
+            document.getElementById('xpBar').style.width = '100%';
+            document.getElementById('levelDisplay').innerText = 'Sistem Uzmanı 🏆';
+            
+            document.getElementById('modalEmoji').innerText = '🎓';
+            document.getElementById('modalTitle').innerText = 'SİSTEMİ HACKLEDİN!';
+            document.getElementById('modalDesc').innerText = 'Tebrikler! Hem Harfleri, hem harekeleri, hem de Tecvid uzatmalarını %100 başarıyla derledin. Artık bir Kur\'an Okuma Mühendisisin.';
+            
+            let btn = document.querySelector('.btn-next');
+            btn.innerText = "Yeniden Başla";
+            btn.onclick = () => location.reload();
+            
+            document.getElementById('successModal').style.display = 'flex';
+            for(let i=0; i<3; i++) setTimeout(createConfetti, i*500); // 3 kat konfeti
+        }
+
+        // Konfeti Efekti
+        function createConfetti() {
+            const colors = ['#4338CA', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
+            for(let i=0; i<40; i++) {
+                let confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 20 + 10 + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '-20px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.style.zIndex = '2000';
+                confetti.style.animation = `fall ${Math.random() * 1.5 + 1}s linear forwards`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+    </script>
+    <style>
+        @keyframes fall {
+            0% { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
+        }
+    </style>
+</body>
+</html>
